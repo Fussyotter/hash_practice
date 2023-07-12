@@ -1,6 +1,8 @@
 from django.test import TestCase
 from django.urls import reverse
 from .models import Url
+from django.test import Client
+from .utils import base62_encode
 from rest_framework.test import APIClient
 
 class UrlShortenerTestCase(TestCase):
@@ -29,4 +31,29 @@ class UrlShortenerTestCase(TestCase):
         self.assertIsNotNone(url.short_url)
         # Assert that the response contains the short url
         self.assertEqual(response.data['short_url'], url.short_url)
-    
+
+        
+class UrlRedirectTestCase(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.url = Url.objects.create(long_url='http://www.example.com', short_url='abc123')
+
+    def test_redirect_view(self):
+        app_name = 'shortener'  # Add this line
+        response = self.client.get(reverse(f'{app_name}:redirect_view', args=['abc123']))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, 'http://www.example.com')
+
+
+class Base62EncodeTestCase(TestCase):
+    def test_base62_encode(self):
+        num = 123456789
+        encoded_value = base62_encode(num)
+        print(f'{num} -> {encoded_value}')
+
+        num = 987654321
+        encoded_value = base62_encode(num)
+        print(f'{num} -> {encoded_value}')
+
+
+ 
